@@ -16,7 +16,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         amount: { currency: 'EUR', value: amount.toString() },
         description: `Voucher ${code} für ${name}`,
-        redirectUrl: `https://jouw-frontend-url.com/voucher-confirmation?code=${code}`,
+        redirectUrl: `https://www.altgrieth.de/danke?code=${code}`,
         webhookUrl: `https://jouw-backend-url.com/api/mollieWebhook`,
         metadata: { name, code, text }
       })
