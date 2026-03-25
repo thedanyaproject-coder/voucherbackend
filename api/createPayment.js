@@ -1,52 +1,62 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const { name, amount, code, text } = req.body;
+    const { amount, name, email, message, description } = req.body || {};
 
-    if (!amount || !code) {
-      return res.status(400).json({ error: 'Missing fields' });
+    if (!process.env.MOLLIE_API_KEY) {
+      return res.status(500).json({ error: "MOLLIE_API_KEY ontbreekt" });
     }
 
-    const response = await fetch('https://api.mollie.com/v2/payments', {
-      method: 'POST',
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ error: "Ongeldig bedrag" });
+    }
+
+    const mollieResponse = await fetch("https://api.mollie.com/v2/payments", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${process.env.MOLLIE_API_KEY}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${process.env.MOLLIE_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         amount: {
-          currency: 'EUR',
+          currency: "EUR",
           value: Number(amount).toFixed(2)
         },
-        description: `Gutschein ${code}${name ? ' für ' + name : ''}`,
-        redirectUrl: 'https://www.altgrieth.de/danke',
+        description: description || "Gutschein Alt Grieth",
+        redirectUrl: "https://voucherfront.vercel.app/success.html",
         metadata: {
-          name: name || '',
-          code: code || '',
-          text: text || ''
+          name: name || "",
+          email: email || "",
+          message: message || "",
+          amount: Number(amount).toFixed(2)
         }
       })
     });
 
-    const data = await response.json();
+    const data = await mollieResponse.json();
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: 'Mollie API error',
-        details: data
-      });
+    if (!mollieResponse.ok) {
+      return res.status(500).json(data);
     }
 
     return res.status(200).json({
+      id: data.id,
       checkoutUrl: data._links.checkout.href
     });
-  } catch (error) {
+  } catch (err) {
     return res.status(500).json({
-      error: 'Server error',
-      message: error.message
+      error: err.message
     });
   }
 }
