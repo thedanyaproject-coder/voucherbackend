@@ -22,6 +22,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Ongeldig bedrag" });
     }
 
+    const voucherCode =
+      "AG-" +
+      new Date().getFullYear() +
+      "-" +
+      Math.floor(100000 + Math.random() * 900000);
+
     const mollieResponse = await fetch("https://api.mollie.com/v2/payments", {
       method: "POST",
       headers: {
@@ -39,7 +45,8 @@ export default async function handler(req, res) {
           name: name || "",
           email: email || "",
           message: message || "",
-          amount: Number(amount).toFixed(2)
+          amount: Number(amount).toFixed(2),
+          voucherCode: voucherCode
         }
       })
     });
