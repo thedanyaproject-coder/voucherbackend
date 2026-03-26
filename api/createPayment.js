@@ -58,8 +58,8 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      id: data.id,
-      checkoutUrl: data._links.checkout.href
+  keyPrefix: process.env.MOLLIE_API_KEY?.slice(0, 5) || "missing"
+});
     });
   } catch (err) {
     return res.status(500).json({
